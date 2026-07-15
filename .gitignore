@@ -1,0 +1,3 @@
+.vscode/
+# Release build artifacts
+dist/

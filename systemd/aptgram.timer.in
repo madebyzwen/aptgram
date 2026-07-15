@@ -1,0 +1,11 @@
+[Unit]
+Description=Run APTGRAM daily
+
+[Timer]
+OnCalendar=*-*-* @CHECK_TIME@:00
+Persistent=true
+AccuracySec=1min
+Unit=aptgram.service
+
+[Install]
+WantedBy=timers.target

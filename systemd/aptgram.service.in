@@ -1,0 +1,9 @@
+[Unit]
+Description=APTGRAM package update check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/aptgram
+@CREDENTIAL_DIRECTIVE@

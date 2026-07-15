@@ -1,0 +1,225 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(
+    cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+        pwd
+)"
+
+if [[ -d "${SCRIPT_DIR}/lib" ]]; then
+    LIB_DIR="${SCRIPT_DIR}/lib"
+else
+    LIB_DIR="/usr/lib/aptgram"
+fi
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/runtime.sh"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/config.sh"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/telegram.sh"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/repository.sh"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/apt_updates.sh"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/report.sh"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/heartbeat.sh"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/release.sh"
+
+readonly APTGRAM_SUPPORT_URL="https://buymeacoffee.com/madebyzwen"
+readonly APTGRAM_REPOSITORY_URL="${APTGRAM_UPDATE_REPOSITORY_URL:-https://github.com/madebyzwen/aptgram}"
+readonly APTGRAM_STATE_DIR="${APTGRAM_STATE_DIR:-/var/lib/aptgram}"
+readonly APTGRAM_LAST_NOTIFIED_VERSION_FILE="${APTGRAM_STATE_DIR}/last-notified-version"
+
+APTGRAM_VERSION_FILE="${SCRIPT_DIR}/VERSION"
+
+if [[ ! -f "${APTGRAM_VERSION_FILE}" ]]; then
+    APTGRAM_VERSION_FILE="${LIB_DIR}/VERSION"
+fi
+
+readonly APTGRAM_VERSION_FILE
+
+CONFIG_FILE="/etc/aptgram/aptgram.conf"
+LOCALES_DIR="/usr/lib/aptgram/locales"
+
+WORK_DIR=""
+UPDATE_DATA_FILE=""
+DISTRO_ID=""
+REPORT_FILE=""
+
+APTGRAM_INSTALLED_VERSION=""
+APTGRAM_AVAILABLE_VERSION=""
+APTGRAM_UPDATE_AVAILABLE=false
+
+UPDATE_TOTAL=0
+UPDATE_SECURITY=0
+UPDATE_REGULAR=0
+UPDATE_BACKPORTS=0
+UPDATE_EXTERNAL=0
+UPDATE_KERNEL=0
+
+declare -A REPOSITORY_ORIGIN=()
+declare -A REPOSITORY_ARCHIVE=()
+
+ensure_aptgram_state_dir() {
+    install \
+        -d \
+        -o root \
+        -g root \
+        -m 0755 \
+        "${APTGRAM_STATE_DIR}"
+}
+
+check_aptgram_update_available() {
+    local remote_version_file="${WORK_DIR}/aptgram.version"
+    local version_relation
+
+    APTGRAM_UPDATE_AVAILABLE=false
+    APTGRAM_INSTALLED_VERSION=""
+    APTGRAM_AVAILABLE_VERSION=""
+
+    APTGRAM_INSTALLED_VERSION="$(
+        read_aptgram_version "${APTGRAM_VERSION_FILE}"
+    )" || return 0
+
+    if ! download_latest_release_version \
+        "${APTGRAM_REPOSITORY_URL}" \
+        "${remote_version_file}"
+    then
+        return 0
+    fi
+
+    APTGRAM_AVAILABLE_VERSION="$(
+        read_aptgram_version "${remote_version_file}"
+    )" || return 0
+
+    version_relation="$(
+        get_version_relation \
+            "${APTGRAM_INSTALLED_VERSION}" \
+            "${APTGRAM_AVAILABLE_VERSION}"
+    )"
+
+    if [[ "${version_relation}" == "update" ]]; then
+        APTGRAM_UPDATE_AVAILABLE=true
+    fi
+}
+
+build_aptgram_update_message() {
+    printf \
+        '%s\n\n%s: %s\n%s: %s\n\n%s:\n%s' \
+        "${TXT_VERSION_NOTIFICATION_TITLE}" \
+        "${TXT_UPDATE_INSTALLED_VERSION}" \
+        "${APTGRAM_INSTALLED_VERSION}" \
+        "${TXT_UPDATE_AVAILABLE_VERSION}" \
+        "${APTGRAM_AVAILABLE_VERSION}" \
+        "${TXT_VERSION_NOTIFICATION_COMMAND}" \
+        'sudo aptgram-update'
+}
+
+get_last_notified_aptgram_version() {
+    if [[ ! -r "${APTGRAM_LAST_NOTIFIED_VERSION_FILE}" ]]; then
+        return 1
+    fi
+
+    read_aptgram_version \
+        "${APTGRAM_LAST_NOTIFIED_VERSION_FILE}"
+}
+
+store_last_notified_aptgram_version() {
+    local version="$1"
+    local state_file="${WORK_DIR}/last-notified-version"
+
+    printf '%s\n' "${version}" >"${state_file}"
+
+    install \
+        -d \
+        -m 0755 \
+        "${APTGRAM_STATE_DIR}"
+
+    install \
+        -m 0644 \
+        "${state_file}" \
+        "${APTGRAM_LAST_NOTIFIED_VERSION_FILE}"
+}
+
+notify_aptgram_update_if_needed() {
+    local last_notified_version=""
+    local message
+
+    if [[ "${APTGRAM_UPDATE_AVAILABLE}" != "true" ]]; then
+        return 0
+    fi
+
+    last_notified_version="$(
+        get_last_notified_aptgram_version
+    )" || last_notified_version=""
+
+    if [[ -n "${last_notified_version}" ]] && \
+        dpkg --compare-versions \
+            "${last_notified_version}" \
+            ge \
+            "${APTGRAM_AVAILABLE_VERSION}"
+    then
+        return 0
+    fi
+
+    message="$(build_aptgram_update_message)"
+
+    if ! send_telegram_message "${message}"; then
+        return 0
+    fi
+
+    store_last_notified_aptgram_version \
+        "${APTGRAM_AVAILABLE_VERSION}"
+}
+
+
+main() {
+    local message
+
+    initialize_runtime
+    trap cleanup_runtime EXIT
+
+    load_configuration
+    load_language
+    load_distribution
+    load_bot_token
+
+    ensure_aptgram_state_dir
+
+    refresh_package_lists
+    collect_available_updates
+    log_update_classification
+    check_aptgram_update_available
+    notify_aptgram_update_if_needed
+
+    if ((UPDATE_TOTAL > 0)); then
+        build_update_report
+
+        message="$(build_update_message)"
+
+        send_telegram_document \
+            "${REPORT_FILE}" \
+            "${message}"
+
+        exit 0
+    fi
+
+    if is_heartbeat_day; then
+        message="$(build_heartbeat_message)"
+        send_telegram_message "${message}"
+    fi
+}
+
+main "$@"
