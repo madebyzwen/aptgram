@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Questions and support
+    url: https://github.com/madebyzwen/aptgram/discussions
+    about: Ask questions and discuss installation or configuration topics.
+
+  - name: Security vulnerability
+    url: https://github.com/madebyzwen/aptgram/security/policy
+    about: Report security issues according to the security policy.

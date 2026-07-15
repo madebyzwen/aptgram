@@ -1,3 +1,7 @@
 .vscode/
 # Release build artifacts
 dist/
+
+# Python cache
+__pycache__/
+*.pyc

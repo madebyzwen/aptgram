@@ -1,0 +1,95 @@
+name: Bug report
+description: Report a reproducible problem with APTGRAM
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem with APTGRAM.
+
+        Do not include Telegram Bot Tokens, passwords, credentials,
+        private Chat IDs or other secrets.
+
+        Security vulnerabilities must not be reported through a public issue.
+        Please follow the instructions in SECURITY.md instead.
+
+  - type: input
+    id: aptgram-version
+    attributes:
+      label: APTGRAM version
+      description: Run `aptgram --version` or provide the installed version.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: distribution
+    attributes:
+      label: Linux distribution
+      description: Include the distribution and version.
+      placeholder: "Debian 13.6, Ubuntu 26.04, UGOS Pro ..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation-type
+    attributes:
+      label: Installation type
+      options:
+        - New installation
+        - Update from an earlier APTGRAM version
+        - Existing installation
+        - Uninstallation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem description
+      description: Describe clearly what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: List the commands or actions required to reproduce the problem.
+      placeholder: |
+        1. Run ...
+        2. Enter ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: |
+        Paste relevant output or logs here.
+
+        Remove all tokens, credentials, passwords and private Chat IDs first.
+      render: shell
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched the existing issues for the same problem.
+          required: true
+        - label: I removed all secrets and private information from this report.
+          required: true
+        - label: This report does not describe a security vulnerability.
+          required: true

@@ -1,0 +1,69 @@
+name: Feature request
+description: Suggest an improvement or new feature for APTGRAM
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement to APTGRAM.
+
+        Please describe the use case clearly and explain how the proposed
+        feature would improve APTGRAM for users.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem should the proposed feature solve?
+      placeholder: |
+        Describe the current limitation or use case.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe how you think the feature should work.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature area
+      options:
+        - APT update detection
+        - Telegram notifications
+        - Installation
+        - Configuration
+        - Updating APTGRAM
+        - Uninstallation
+        - Localization
+        - Reporting
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternative solutions or workarounds.
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add examples, screenshots or other useful information.
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched the existing issues and discussions for a similar request.
+          required: true
+        - label: This request does not contain credentials, tokens or private information.
+          required: true
