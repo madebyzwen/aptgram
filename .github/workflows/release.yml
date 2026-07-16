@@ -76,11 +76,9 @@ jobs:
           version="${RELEASE_TAG#v}"
 
           gh release create "${RELEASE_TAG}" \
-            "dist/aptgram-v${version}.tar.gz" \
-            "dist/aptgram-v${version}.tar.gz.sha256" \
-            "dist/aptgram.tar.gz" \
-            "dist/aptgram.tar.gz.sha256" \
-            "dist/aptgram.version" \
+            "dist/${version}/aptgram.tar.gz" \
+            "dist/${version}/aptgram.tar.gz.sha256" \
+            "dist/${version}/aptgram.version" \
             --title "APTGRAM ${RELEASE_TAG}" \
             --notes-file "${RUNNER_TEMP}/release-notes.md" \
             --verify-tag

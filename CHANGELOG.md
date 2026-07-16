@@ -4,6 +4,10 @@ All notable changes to APTGRAM are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Release builds are stored in version-specific `dist/X.Y.Z/` directories, and GitHub releases publish only the three assets required by the built-in updater instead of duplicate archives.
+
 ## [1.1.0] - 2026-07-16
 
 ### Added

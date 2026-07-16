@@ -5,7 +5,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
-readonly DIST_DIR="${ROOT_DIR}/dist"
+readonly DIST_ROOT="${ROOT_DIR}/dist"
 readonly VERSION_FILE="${ROOT_DIR}/VERSION"
 
 RELEASE_VERSION=""
@@ -18,13 +18,12 @@ if [[ -r "${VERSION_FILE}" ]]; then
 fi
 
 readonly RELEASE_VERSION
-readonly ARCHIVE_BASENAME="aptgram-v${RELEASE_VERSION}.tar.gz"
+readonly DIST_DIR="${DIST_ROOT}/${RELEASE_VERSION}"
+readonly ARCHIVE_BASENAME="aptgram.tar.gz"
 readonly CHECKSUM_BASENAME="${ARCHIVE_BASENAME}.sha256"
 readonly ARCHIVE_FILE="${DIST_DIR}/${ARCHIVE_BASENAME}"
 readonly CHECKSUM_FILE="${DIST_DIR}/${CHECKSUM_BASENAME}"
-readonly COMPAT_ARCHIVE_FILE="${DIST_DIR}/aptgram.tar.gz"
-readonly COMPAT_CHECKSUM_FILE="${DIST_DIR}/aptgram.tar.gz.sha256"
-readonly COMPAT_VERSION_FILE="${DIST_DIR}/aptgram.version"
+readonly VERSION_ASSET_FILE="${DIST_DIR}/aptgram.version"
 
 readonly -a RELEASE_FILES=(
     "aptgram"
@@ -121,9 +120,9 @@ refuse_existing_assets() {
     local -a assets=(
         "${ARCHIVE_FILE}"
         "${CHECKSUM_FILE}"
-        "${COMPAT_ARCHIVE_FILE}"
-        "${COMPAT_CHECKSUM_FILE}"
-        "${COMPAT_VERSION_FILE}"
+        "${VERSION_ASSET_FILE}"
+        "${DIST_DIR}/aptgram-v${RELEASE_VERSION}.tar.gz"
+        "${DIST_DIR}/aptgram-v${RELEASE_VERSION}.tar.gz.sha256"
     )
 
     for asset in "${assets[@]}"; do
@@ -202,14 +201,7 @@ write_release_assets() {
         sha256sum "${ARCHIVE_BASENAME}" >"${CHECKSUM_BASENAME}"
     )
 
-    cp -p -- "${ARCHIVE_FILE}" "${COMPAT_ARCHIVE_FILE}"
-
-    (
-        cd "${DIST_DIR}"
-        sha256sum aptgram.tar.gz >aptgram.tar.gz.sha256
-    )
-
-    printf '%s\n' "${RELEASE_VERSION}" >"${COMPAT_VERSION_FILE}"
+    printf '%s\n' "${RELEASE_VERSION}" >"${VERSION_ASSET_FILE}"
 }
 
 show_release_result() {
@@ -217,9 +209,7 @@ show_release_result() {
     printf 'Version: %s\n' "${RELEASE_VERSION}"
     printf 'Archive: %s\n' "${ARCHIVE_FILE}"
     printf 'Checksum: %s\n' "${CHECKSUM_FILE}"
-    printf 'Compatibility archive: %s\n' "${COMPAT_ARCHIVE_FILE}"
-    printf 'Compatibility checksum: %s\n' "${COMPAT_CHECKSUM_FILE}"
-    printf 'Compatibility version: %s\n' "${COMPAT_VERSION_FILE}"
+    printf 'Version asset: %s\n' "${VERSION_ASSET_FILE}"
     printf '\nArchive contents:\n'
     tar -tzf "${ARCHIVE_FILE}"
 }

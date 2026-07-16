@@ -10,6 +10,7 @@ CHANGELOG_FILE="${ROOT_DIR}/CHANGELOG.md"
 
 EXPECTED_TAG=""
 RELEASE_VERSION=""
+RELEASE_DIST_DIR=""
 WORK_DIR=""
 
 usage() {
@@ -81,6 +82,8 @@ load_and_validate_version() {
     if [[ -z "${EXPECTED_TAG}" ]]; then
         EXPECTED_TAG="v${RELEASE_VERSION}"
     fi
+
+    RELEASE_DIST_DIR="${ROOT_DIR}/dist/${RELEASE_VERSION}"
 }
 
 check_tag_and_version() {
@@ -169,7 +172,12 @@ remove_current_release_assets() {
         "${ROOT_DIR}/dist/aptgram-v${RELEASE_VERSION}.tar.gz.sha256" \
         "${ROOT_DIR}/dist/aptgram.tar.gz" \
         "${ROOT_DIR}/dist/aptgram.tar.gz.sha256" \
-        "${ROOT_DIR}/dist/aptgram.version"
+        "${ROOT_DIR}/dist/aptgram.version" \
+        "${RELEASE_DIST_DIR}/aptgram-v${RELEASE_VERSION}.tar.gz" \
+        "${RELEASE_DIST_DIR}/aptgram-v${RELEASE_VERSION}.tar.gz.sha256" \
+        "${RELEASE_DIST_DIR}/aptgram.tar.gz" \
+        "${RELEASE_DIST_DIR}/aptgram.tar.gz.sha256" \
+        "${RELEASE_DIST_DIR}/aptgram.version"
 }
 
 build_release() {
@@ -178,16 +186,11 @@ build_release() {
 
 verify_checksum() {
     (
-        cd "${ROOT_DIR}/dist"
-        sha256sum -c "aptgram-v${RELEASE_VERSION}.tar.gz.sha256" >/dev/null
+        cd "${RELEASE_DIST_DIR}"
         sha256sum -c aptgram.tar.gz.sha256 >/dev/null
     )
 
-    cmp -s \
-        "${ROOT_DIR}/dist/aptgram-v${RELEASE_VERSION}.tar.gz" \
-        "${ROOT_DIR}/dist/aptgram.tar.gz"
-
-    [[ "$(<"${ROOT_DIR}/dist/aptgram.version")" == "${RELEASE_VERSION}" ]]
+    [[ "$(<"${RELEASE_DIST_DIR}/aptgram.version")" == "${RELEASE_VERSION}" ]]
 }
 
 verify_archive_contents() {
@@ -196,7 +199,7 @@ verify_archive_contents() {
 
     "${BUILD_SCRIPT}" --print-files | sort >"${expected_manifest}"
 
-    tar -tzf "${ROOT_DIR}/dist/aptgram-v${RELEASE_VERSION}.tar.gz" |
+    tar -tzf "${RELEASE_DIST_DIR}/aptgram.tar.gz" |
         sed -e 's#^\./##' -e '/^$/d' -e '/\/$/d' |
         sort >"${actual_manifest}"
 
@@ -208,16 +211,16 @@ verify_archive_version() {
 
     archive_version="$(
         tar -xOf \
-            "${ROOT_DIR}/dist/aptgram-v${RELEASE_VERSION}.tar.gz" \
+            "${RELEASE_DIST_DIR}/aptgram.tar.gz" \
             ./VERSION
     )"
 
     [[ "${archive_version}" == "${RELEASE_VERSION}" ]]
-    [[ "$(<"${ROOT_DIR}/dist/aptgram.version")" == "${RELEASE_VERSION}" ]]
+    [[ "$(<"${RELEASE_DIST_DIR}/aptgram.version")" == "${RELEASE_VERSION}" ]]
 }
 
 verify_archive_secrets() {
-    local archive="${ROOT_DIR}/dist/aptgram-v${RELEASE_VERSION}.tar.gz"
+    local archive="${RELEASE_DIST_DIR}/aptgram.tar.gz"
     local extract_dir="${WORK_DIR}/archive"
     local raw_matches="${WORK_DIR}/secret-matches.raw"
     local filtered_matches="${WORK_DIR}/secret-matches.filtered"
@@ -258,7 +261,7 @@ verify_reproducible_build() {
     local first_checksum="${WORK_DIR}/first.sha256"
 
     cp -p \
-        "${ROOT_DIR}/dist/aptgram-v${RELEASE_VERSION}.tar.gz" \
+        "${RELEASE_DIST_DIR}/aptgram.tar.gz" \
         "${first_archive}"
     sha256sum "${first_archive}" | awk '{print $1}' >"${first_checksum}"
 
@@ -267,7 +270,7 @@ verify_reproducible_build() {
     build_release
 
     [[ "$(<"${first_checksum}")" == "$(
-        sha256sum "${ROOT_DIR}/dist/aptgram-v${RELEASE_VERSION}.tar.gz" |
+        sha256sum "${RELEASE_DIST_DIR}/aptgram.tar.gz" |
             awk '{print $1}'
     )" ]]
 }
@@ -289,7 +292,7 @@ main() {
 
     remove_current_release_assets
     run_check "Release-Paket bauen" build_release
-    run_check "Prüfsummen und Kompatibilitäts-Assets prüfen" verify_checksum
+    run_check "Prüfsumme und Update-Assets prüfen" verify_checksum
     run_check "Archiv-Allowlist prüfen" verify_archive_contents
     run_check "Version im Archiv prüfen" verify_archive_version
     run_check "Archiv auf Secrets und Entwicklerdateien prüfen" verify_archive_secrets
@@ -300,8 +303,8 @@ main() {
 
     printf '\nAPTGRAM v%s ist technisch für den Release vorbereitet.\n' \
         "${RELEASE_VERSION}"
-    printf 'Archiv: dist/aptgram-v%s.tar.gz\n' "${RELEASE_VERSION}"
-    printf 'Prüfsumme: dist/aptgram-v%s.tar.gz.sha256\n' \
+    printf 'Archiv: dist/%s/aptgram.tar.gz\n' "${RELEASE_VERSION}"
+    printf 'Prüfsumme: dist/%s/aptgram.tar.gz.sha256\n' \
         "${RELEASE_VERSION}"
 }
 
