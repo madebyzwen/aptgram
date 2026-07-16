@@ -468,6 +468,52 @@ journalctl -u aptgram.service --no-pager -n 50
 
 ---
 
+## APTGRAM aktualisieren
+
+APTGRAM prüft während des täglichen Laufs, ob eine neue APTGRAM-Version verfügbar ist. Für jede neu erkannte Version wird einmalig eine Telegram-Nachricht gesendet.
+
+Ein verfügbares Update wird mit folgendem Befehl installiert:
+
+```bash
+sudo aptgram-update
+```
+
+Der Updater lädt das Release-Paket herunter, prüft dessen SHA-256-Prüfsumme und Paketinhalt und erstellt vor dem Austausch der Programmdateien eine Rollback-Sicherung. Sprache, Telegram Chat-/Channel-ID, Bot Token, Credential-Modus, tägliche Prüfzeit und bisheriger Timer-Zustand bleiben erhalten.
+
+Schlägt das Update beim Austausch der Programmdateien oder systemd-Units fehl, versucht APTGRAM, den vorherigen Programm- und Timer-Zustand wiederherzustellen.
+
+Bei einem direkten Update von APTGRAM 1.0.0 auf 1.1.0 muss `sudo aptgram-update` nach dem ersten erfolgreichen Update einmal erneut ausgeführt werden. Dadurch wird der neue Befehl `aptgram-config` ergänzt. Die vorhandenen Einstellungen bleiben unverändert.
+
+---
+
+## Konfiguration nachträglich ändern
+
+Eine bestehende Installation kann interaktiv angepasst werden:
+
+```bash
+sudo aptgram-config
+```
+
+Telegram Bot Token, Chat-/Channel-ID und tägliche Prüfzeit können einzeln geändert oder übersprungen werden. Nicht ausgewählte Werte bleiben unverändert.
+
+Der gespeicherte Bot Token wird bei der Frage, ob er geändert werden soll, nicht angezeigt. Ein neu eingegebener Token ist während der Eingabe sichtbar. Neue Bot Tokens und Chat-/Channel-IDs werden vor dem Speichern mit Telegram geprüft.
+
+Eine geänderte Prüfzeit aktualisiert und startet den systemd-Timer neu. Anschließend wird der nächste geplante Lauf angezeigt. Nach erfolgreichen Änderungen sendet APTGRAM eine abschließende Telegram-Nachricht mit den geänderten Einstellungen und der aktiven täglichen Prüfzeit.
+
+---
+
+## Test-Heartbeat senden
+
+Die konfigurierte Heartbeat-Nachricht kann sofort gesendet werden:
+
+```bash
+sudo aptgram send-test-heartbeat
+```
+
+Der Befehl verwendet die vorhandene Konfiguration, Sprache, Telegram-Zugangsdaten und Heartbeat-Nachricht. Dabei werden weder die APT-Paketlisten aktualisiert noch verfügbare Updates geprüft.
+
+---
+
 ## Deinstallation
 
 APTGRAM installiert automatisch einen eigenen Uninstaller.

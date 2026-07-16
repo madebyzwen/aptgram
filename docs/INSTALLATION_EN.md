@@ -462,6 +462,52 @@ journalctl -u aptgram.service --no-pager -n 50
 
 ---
 
+## Updating APTGRAM
+
+APTGRAM checks for new APTGRAM releases during its daily scheduled run. For each newly available version, a separate Telegram notification is sent once.
+
+Install an available update with:
+
+```bash
+sudo aptgram-update
+```
+
+The updater downloads the release package, verifies its SHA-256 checksum, validates the package contents, and creates a rollback backup before replacing program files. The configured language, Telegram chat or channel ID, Bot Token, credential mode, daily check time, and previous timer state are preserved.
+
+If an update fails while files or systemd units are being replaced, APTGRAM attempts to restore the previous program and timer state.
+
+When upgrading directly from APTGRAM 1.0.0 to 1.1.0, run `sudo aptgram-update` a second time after the first successful update. This installs the new `aptgram-config` command. Existing settings remain unchanged.
+
+---
+
+## Change the configuration after installation
+
+An existing installation can be adjusted interactively:
+
+```bash
+sudo aptgram-config
+```
+
+The Telegram Bot Token, chat/channel ID, and daily check time can be changed or skipped independently. Values that are not selected remain unchanged.
+
+The stored Bot Token is never displayed when APTGRAM asks whether it should be changed. A newly entered token is visible while it is being entered. New Bot Tokens and chat or channel IDs are verified with Telegram before they are saved.
+
+Changing the daily check time updates and restarts the systemd timer and displays the next scheduled run. After successful changes, APTGRAM sends a final Telegram confirmation containing the changed setting names and the active daily check time.
+
+---
+
+## Sending a test heartbeat
+
+The configured heartbeat message can be sent immediately:
+
+```bash
+sudo aptgram send-test-heartbeat
+```
+
+This command uses the existing configuration, language, Telegram credentials, and heartbeat message. It does not refresh APT package lists and does not perform an update check.
+
+---
+
 ## Uninstallation
 
 APTGRAM automatically installs its own uninstaller.

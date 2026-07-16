@@ -132,6 +132,36 @@ To install an available APTGRAM update on the server:
 sudo aptgram-update
 ```
 
+The updater downloads the release package, verifies its SHA-256 checksum, validates the package contents, and creates a rollback backup before replacing program files. The configured language, Telegram chat or channel ID, Bot Token, credential mode, daily check time, and previous timer state are preserved.
+
+If an update fails while files or systemd units are being replaced, APTGRAM attempts to restore the previous program and timer state.
+
+When upgrading directly from APTGRAM 1.0.0 to 1.1.0, run `sudo aptgram-update` a second time after the first successful update. This installs the new `aptgram-config` command. Existing settings remain unchanged.
+
+## Changing the configuration
+
+Existing settings can be changed interactively after installation:
+
+```bash
+sudo aptgram-config
+```
+
+The tool can change the Telegram Bot Token, Telegram chat or channel ID, and daily check time. Each setting can be skipped independently, so values that are not selected remain unchanged.
+
+The stored Bot Token is never displayed when APTGRAM asks whether it should be changed. A newly entered token is visible while it is being entered. New Bot Tokens and chat or channel IDs are verified with Telegram before they are saved.
+
+Changing the daily check time updates and restarts the systemd timer and displays the next scheduled run. After successful changes, APTGRAM sends a final Telegram confirmation containing the changed setting names and the active daily check time.
+
+## Sending a test heartbeat
+
+The configured heartbeat message can be sent immediately:
+
+```bash
+sudo aptgram send-test-heartbeat
+```
+
+This command uses the existing configuration, language, Bot Token, chat or channel ID, and heartbeat message. It does not refresh APT package lists and does not perform an update check.
+
 ## Uninstallation
 
 To remove APTGRAM completely:
@@ -159,6 +189,8 @@ It provides:
 - Telegram update notifications
 - Update reports sent as Telegram documents
 - Weekly heartbeat notifications to confirm that APTGRAM is still running and able to reach Telegram
+- Manual test heartbeat command without an APT update check
+- Interactive post-installation configuration for Telegram credentials and the daily schedule
 - Multi-language installer, notifications, and reports
 - Secure Telegram bot token handling using systemd credentials
 - Support for encrypted systemd credentials where available
