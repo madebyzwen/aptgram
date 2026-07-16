@@ -5,3 +5,19 @@ dist/
 # Python cache
 __pycache__/
 *.pyc
+
+# Local secrets and credentials
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.kdbx
+*.cred
+credentials/
+
+# Local VM deployment helpers and transfer archives
+tools/deploy-vm
+tools/deploy-vm.ps1
+aptgram-transfer.tar.gz

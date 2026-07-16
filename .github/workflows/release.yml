@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Validate and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Refuse an existing GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "GitHub release already exists: ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
+      - name: Run release checks and build assets
+        run: tools/check-release.sh --tag "${GITHUB_REF_NAME}"
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+
+          awk -v version="${version}" '
+            $0 ~ "^## \\[" version "\\] - " {
+              capture = 1
+              next
+            }
+            capture && /^## \[/ {
+              exit
+            }
+            capture {
+              print
+            }
+          ' CHANGELOG.md >"${RUNNER_TEMP}/release-notes.md"
+
+          if [[ ! -s "${RUNNER_TEMP}/release-notes.md" ]]; then
+            echo "No release notes found for ${version}." >&2
+            exit 1
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/aptgram-v${version}.tar.gz" \
+            "dist/aptgram-v${version}.tar.gz.sha256" \
+            "dist/aptgram.tar.gz" \
+            "dist/aptgram.tar.gz.sha256" \
+            "dist/aptgram.version" \
+            --title "APTGRAM ${GITHUB_REF_NAME}" \
+            --notes-file "${RUNNER_TEMP}/release-notes.md" \
+            --verify-tag
