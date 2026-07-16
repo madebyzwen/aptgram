@@ -95,11 +95,14 @@ validate_release_tree() {
     local source_file
     local -a required_files=(
         "${source_dir}/aptgram"
+        "${source_dir}/aptgram-config"
         "${source_dir}/install.sh"
         "${source_dir}/uninstall.sh"
         "${source_dir}/update.sh"
         "${source_dir}/VERSION"
         "${source_dir}/lib/config.sh"
+        "${source_dir}/lib/config_command.sh"
+        "${source_dir}/lib/configuration.sh"
         "${source_dir}/lib/deployment.sh"
         "${source_dir}/lib/heartbeat.sh"
         "${source_dir}/lib/recovery.sh"

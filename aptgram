@@ -51,7 +51,13 @@ fi
 readonly APTGRAM_VERSION_FILE
 
 CONFIG_FILE="/etc/aptgram/aptgram.conf"
-LOCALES_DIR="/usr/lib/aptgram/locales"
+APTGRAM_CREDENTIAL_DIR="/etc/aptgram/credentials"
+
+if [[ -d "${SCRIPT_DIR}/locales" ]]; then
+    LOCALES_DIR="${SCRIPT_DIR}/locales"
+else
+    LOCALES_DIR="/usr/lib/aptgram/locales"
+fi
 
 WORK_DIR=""
 UPDATE_DATA_FILE=""
@@ -184,8 +190,51 @@ notify_aptgram_update_if_needed() {
         "${APTGRAM_AVAILABLE_VERSION}"
 }
 
+load_command_language() {
+    APTGRAM_LANGUAGE="en"
 
-main() {
+    if [[ -r "${CONFIG_FILE}" ]]; then
+        # shellcheck source=/dev/null
+        source "${CONFIG_FILE}"
+    fi
+
+    load_language
+}
+
+show_usage() {
+    printf \
+        '%s\n  aptgram\n  aptgram send-test-heartbeat\n  aptgram --help\n\n%s\n  %s\n  %s\n  %s\n' \
+        "${TXT_USAGE}" \
+        "${TXT_COMMANDS}" \
+        "${TXT_COMMAND_AUTOMATIC}" \
+        "${TXT_COMMAND_SEND_TEST_HEARTBEAT}" \
+        "${TXT_COMMAND_HELP}"
+}
+
+send_test_heartbeat() {
+    local message
+
+    load_configuration
+    load_language
+
+    if [[ ! "${TELEGRAM_CHAT_ID:-}" =~ ^-?[0-9]+$ ]]; then
+        printf '%s\n' "${TXT_CHAT_ID_INVALID}" >&2
+        return 1
+    fi
+
+    load_bot_token_for_manual_command
+
+    message="$(build_heartbeat_message)"
+
+    if ! send_telegram_message "${message}"; then
+        printf '%s\n' "${TXT_SEND_TEST_HEARTBEAT_FAILED}" >&2
+        return 1
+    fi
+
+    printf '%s\n' "${TXT_SEND_TEST_HEARTBEAT_SUCCESS}"
+}
+
+run_automatic_check() {
     local message
 
     initialize_runtime
@@ -220,6 +269,38 @@ main() {
         message="$(build_heartbeat_message)"
         send_telegram_message "${message}"
     fi
+}
+
+main() {
+    case "${1:-}" in
+        "")
+            if (($# != 0)); then
+                load_command_language
+                show_usage >&2
+                return 2
+            fi
+
+            run_automatic_check
+            ;;
+        send-test-heartbeat)
+            if (($# != 1)); then
+                load_command_language
+                show_usage >&2
+                return 2
+            fi
+
+            send_test_heartbeat
+            ;;
+        -h|--help|help)
+            load_command_language
+            show_usage
+            ;;
+        *)
+            load_command_language
+            show_usage >&2
+            return 2
+            ;;
+    esac
 }
 
 main "$@"

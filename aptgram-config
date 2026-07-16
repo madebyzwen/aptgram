@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(
+    cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+        pwd
+)"
+
+if [[ -f "${SCRIPT_DIR}/lib/config_command.sh" ]]; then
+    CONFIG_COMMAND_LIB="${SCRIPT_DIR}/lib/config_command.sh"
+else
+    CONFIG_COMMAND_LIB="/usr/lib/aptgram/config_command.sh"
+fi
+
+if [[ ! -r "${CONFIG_COMMAND_LIB}" ]]; then
+    printf 'APTGRAM configuration command is unavailable: %s\n' \
+        "${CONFIG_COMMAND_LIB}" \
+        >&2
+    exit 1
+fi
+
+# shellcheck source=/dev/null
+source "${CONFIG_COMMAND_LIB}"
+
+main() {
+    aptgram_config_main "$@"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

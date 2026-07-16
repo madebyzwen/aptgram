@@ -24,6 +24,28 @@ TIMER_WAS_ENABLED=false
 TIMER_WAS_ACTIVE=false
 BACKUP_CREATED=false
 
+install_missing_config_command() {
+    local install_bin_dir="$1"
+    local install_lib_dir="$2"
+    local config_command="${install_bin_dir}/aptgram-config"
+    local compatibility_source="${install_lib_dir}/config_command.sh"
+
+    if [[ -x "${config_command}" ]]; then
+        return 0
+    fi
+
+    if [[ ! -r "${compatibility_source}" ]]; then
+        return 0
+    fi
+
+    sudo install \
+        -o root \
+        -g root \
+        -m 0755 \
+        "${compatibility_source}" \
+        "${config_command}"
+}
+
 prepare_update_runtime() {
     local self_dir
     local self_script
@@ -155,10 +177,13 @@ validate_installed_aptgram() {
     local installed_file
     local -a required_files=(
         "${INSTALL_BIN_DIR}/aptgram"
+        "${INSTALL_BIN_DIR}/aptgram-config"
         "${INSTALL_BIN_DIR}/aptgram-uninstall"
         "${INSTALL_BIN_DIR}/aptgram-update"
         "${VERSION_FILE}"
         "${CONFIG_FILE}"
+        "${INSTALL_LIB_DIR}/config_command.sh"
+        "${INSTALL_LIB_DIR}/configuration.sh"
         "${INSTALL_LIB_DIR}/deployment.sh"
         "${INSTALL_LIB_DIR}/recovery.sh"
         "${INSTALL_LIB_DIR}/release.sh"
@@ -250,6 +275,7 @@ prepare_release() {
 
     if ! bash -n \
         "${EXTRACT_DIR}/aptgram" \
+        "${EXTRACT_DIR}/aptgram-config" \
         "${EXTRACT_DIR}/install.sh" \
         "${EXTRACT_DIR}/uninstall.sh" \
         "${EXTRACT_DIR}/update.sh" \
@@ -309,6 +335,7 @@ show_version_status() {
 validate_installed_files() {
     sudo bash -n \
         "${INSTALL_BIN_DIR}/aptgram" \
+        "${INSTALL_BIN_DIR}/aptgram-config" \
         "${INSTALL_BIN_DIR}/aptgram-uninstall" \
         "${INSTALL_BIN_DIR}/aptgram-update" \
         "${INSTALL_LIB_DIR}/"*.sh \
@@ -419,6 +446,9 @@ main() {
 
     sudo -v
 
+    install_missing_config_command \
+        "${INSTALL_BIN_DIR}" \
+        "${INSTALL_LIB_DIR}"
     validate_installed_aptgram
 
     echo
@@ -445,4 +475,6 @@ main() {
     esac
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi

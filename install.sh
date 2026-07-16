@@ -111,9 +111,12 @@ validate_source_tree() {
     local source_file
     local -a required_files=(
         "${SCRIPT_DIR}/aptgram"
+        "${SCRIPT_DIR}/aptgram-config"
         "${SCRIPT_DIR}/uninstall.sh"
         "${SCRIPT_DIR}/VERSION"
         "${LIB_DIR}/config.sh"
+        "${LIB_DIR}/config_command.sh"
+        "${LIB_DIR}/configuration.sh"
         "${LIB_DIR}/heartbeat.sh"
         "${LIB_DIR}/report.sh"
         "${LIB_DIR}/repository.sh"
@@ -149,6 +152,10 @@ validate_source_tree() {
 load_installer_modules() {
     # shellcheck source=/dev/null
     source "${LIB_DIR}/deployment.sh"
+    # shellcheck source=/dev/null
+    source "${LIB_DIR}/telegram.sh"
+    # shellcheck source=/dev/null
+    source "${LIB_DIR}/configuration.sh"
 }
 
 detect_language() {
@@ -258,45 +265,27 @@ store_bot_token() {
     APTGRAM_CREDENTIAL_MODE="plain"
 }
 
-telegram_request() {
-    local bot_token="$1"
-    local method="$2"
-
-    shift 2
-
-    printf 'url = "https://api.telegram.org/bot%s/%s"\n' \
-        "${bot_token}" \
-        "${method}" |
-        curl \
-            --disable \
-            --silent \
-            --show-error \
-            --fail-with-body \
-            --config - \
-            "$@"
-}
-
-
 prompt_bot_token() {
     local bot_token
 
     while true; do
         echo
         read -r -p "${TXT_BOT_TOKEN}: " bot_token
-        echo
+        printf '\n\n'
 
         if [[ -z "${bot_token}" ]]; then
             echo "${TXT_VALUE_REQUIRED}"
             continue
         fi
 
+        if ! is_valid_bot_token_format "${bot_token}"; then
+            echo "${TXT_BOT_TOKEN_INVALID}"
+            continue
+        fi
+
         echo "${TXT_TESTING_BOT_TOKEN}"
 
-        if telegram_request \
-            "${bot_token}" \
-            "getMe" \
-            >/dev/null 2>&1
-        then
+        if verify_telegram_bot_token "${bot_token}"; then
             echo "${TXT_BOT_TOKEN_VALID}"
             BOT_TOKEN="${bot_token}"
             return
@@ -314,19 +303,17 @@ prompt_chat_id() {
         echo
         read -r -p "${TXT_CHAT_ID}: " chat_id
 
-        if [[ ! "${chat_id}" =~ ^-?[0-9]+$ ]]; then
+        if ! is_valid_telegram_chat_id "${chat_id}"; then
             echo "${TXT_CHAT_ID_INVALID}"
             continue
         fi
 
         echo "${TXT_TESTING_TELEGRAM}"
 
-        if telegram_request \
+        if verify_telegram_chat_id \
             "${BOT_TOKEN}" \
-            "sendMessage" \
-            --data-urlencode "chat_id=${chat_id}" \
-            --data-urlencode "text=${TXT_TEST_MESSAGE}" \
-            >/dev/null 2>&1
+            "${chat_id}" \
+            "${TXT_TEST_MESSAGE}"
         then
             echo "${TXT_TELEGRAM_SUCCESS}"
             CHAT_ID="${chat_id}"
@@ -347,7 +334,7 @@ prompt_check_time() {
 
         check_time="${check_time:-20:00}"
 
-        if [[ "${check_time}" =~ ^([01][0-9]|2[0-3]):[0-5][0-9]$ ]]; then
+        if is_valid_check_time "${check_time}"; then
             CHECK_TIME="${check_time}"
             return
         fi
@@ -408,11 +395,9 @@ main() {
 
     read -r -p "${TXT_CHANGE_LANGUAGE} " change_language
 
-    case "${change_language,,}" in
-        y|yes|j|ja|s|si|sí|o|oui)
-            select_language
-            ;;
-    esac
+    if is_affirmative_answer "${change_language}"; then
+        select_language
+    fi
 
     echo
     printf "%s: %s\n" "${TXT_SELECTED_LANGUAGE}" "${LANGUAGE_NAME}"

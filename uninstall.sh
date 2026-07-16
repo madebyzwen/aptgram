@@ -16,6 +16,7 @@ else
 fi
 
 readonly APTGRAM_BIN="/usr/bin/aptgram"
+readonly CONFIG_BIN="/usr/bin/aptgram-config"
 readonly UPDATE_BIN="/usr/bin/aptgram-update"
 readonly UNINSTALL_BIN="/usr/bin/aptgram-uninstall"
 
@@ -81,6 +82,7 @@ remove_aptgram_files() {
         "${SYSTEMD_UNIT_DIR}/aptgram.service" \
         "${SYSTEMD_UNIT_DIR}/aptgram.timer" \
         "${APTGRAM_BIN}" \
+        "${CONFIG_BIN}" \
         "${UPDATE_BIN}"
 
     rm -rf \

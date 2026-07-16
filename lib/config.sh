@@ -48,3 +48,40 @@ load_bot_token() {
 
     BOT_TOKEN="$(<"${credential_file}")"
 }
+
+load_bot_token_for_manual_command() {
+    local encrypted_file="${APTGRAM_CREDENTIAL_DIR}/telegram-bot-token.cred"
+    local plain_file="${APTGRAM_CREDENTIAL_DIR}/telegram-bot-token"
+
+    if [[ -n "${CREDENTIALS_DIRECTORY:-}" ]]; then
+        load_bot_token
+        return
+    fi
+
+    if [[ -r "${plain_file}" ]]; then
+        BOT_TOKEN="$(<"${plain_file}")"
+    elif [[ -r "${encrypted_file}" ]] && \
+        command -v systemd-creds >/dev/null 2>&1
+    then
+        if ! BOT_TOKEN="$(
+            systemd-creds \
+                decrypt \
+                --name=telegram-bot-token \
+                "${encrypted_file}" \
+                - \
+                2>/dev/null
+        )"
+        then
+            printf '%s\n' "${TXT_TELEGRAM_CREDENTIAL_UNAVAILABLE}" >&2
+            return 1
+        fi
+    else
+        printf '%s\n' "${TXT_TELEGRAM_CREDENTIAL_UNAVAILABLE}" >&2
+        return 1
+    fi
+
+    if [[ -z "${BOT_TOKEN}" ]]; then
+        printf '%s\n' "${TXT_TELEGRAM_CREDENTIAL_UNAVAILABLE}" >&2
+        return 1
+    fi
+}

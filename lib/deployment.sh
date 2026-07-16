@@ -26,6 +26,13 @@ install_program_files() {
         -o root \
         -g root \
         -m 0755 \
+        "${source_dir}/aptgram-config" \
+        "${install_bin_dir}/aptgram-config"
+
+    sudo install \
+        -o root \
+        -g root \
+        -m 0755 \
         "${source_dir}/uninstall.sh" \
         "${install_bin_dir}/aptgram-uninstall"
 

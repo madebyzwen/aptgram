@@ -23,6 +23,12 @@ create_update_backup() {
             "${backup_dir}/bin/"
     fi
 
+    if [[ -f "${install_bin_dir}/aptgram-config" ]]; then
+        sudo cp -a \
+            "${install_bin_dir}/aptgram-config" \
+            "${backup_dir}/bin/"
+    fi
+
     sudo cp -a \
         "${install_lib_dir}" \
         "${backup_dir}/aptgram-lib"
@@ -70,6 +76,7 @@ restore_update_backup() (
 
     sudo rm -f \
         "${install_bin_dir}/aptgram" \
+        "${install_bin_dir}/aptgram-config" \
         "${install_bin_dir}/aptgram-uninstall" \
         "${install_bin_dir}/aptgram-update"
 
