@@ -93,11 +93,8 @@ Du benötigst ihn später während der APTGRAM-Installation.
 >
 > Falls ein Token versehentlich veröffentlicht wurde, widerrufe ihn sofort über `@BotFather` und erstelle einen neuen Token.
 
-<!-- SCREENSHOT 1
-Datei: docs/images/telegram-botfather-token.png
-Inhalt: BotFather nach erfolgreicher Bot-Erstellung.
-Der echte Token muss im Screenshot vollständig unkenntlich gemacht werden.
--->
+![BotFather nach erfolgreicher Erstellung des Telegram-Bots](images/telegram-botfather-token.png)
+
 
 ---
 
@@ -149,23 +146,8 @@ Der Bot benötigt mindestens die Berechtigung, Nachrichten im Kanal zu veröffen
 
 Andere Administratorrechte werden von APTGRAM nicht benötigt.
 
-<!-- SCREENSHOT 2
-Datei: docs/images/telegram-channel-admin.png
-Inhalt: Telegram-Kanalverwaltung mit dem APTGRAM-Bot als Administrator.
-Die Berechtigung zum Veröffentlichen von Nachrichten sollte sichtbar sein.
--->
+![APTGRAM-Bot als Administrator des Telegram-Kanals](images/telegram-channel-admin.png)
 
-Nachdem der Bot hinzugefügt wurde, sende selbst eine neue Nachricht in den Kanal.
-
-Zum Beispiel:
-
-```text
-APTGRAM setup
-```
-
-Wichtig ist, dass diese Nachricht **nach dem Hinzufügen des Bots** gesendet wird.
-
-Telegram kann dadurch dem Bot ein neues Kanal-Update bereitstellen.
 
 ---
 
@@ -179,43 +161,27 @@ Eine Kanal-ID sieht zum Beispiel so aus:
 -1001234567890
 ```
 
-Öffne auf dem Debian-basierten Linux-System, auf dem APTGRAM installiert werden soll, ein Terminal.
+Die Kanal-ID lässt sich am einfachsten über **Telegram Web** ermitteln. Dafür benötigst du weder ein Terminal noch deinen Bot Token.
 
-Kopiere den folgenden Befehl vollständig in das Terminal:
+1. Öffne im Browser:
 
-```bash
-read -rsp "Telegram Bot Token: " BOT_TOKEN
-printf '\n'
+   ```text
+   https://web.telegram.org
+   ```
 
-printf 'url = "https://api.telegram.org/bot%s/getUpdates"\n' "${BOT_TOKEN}" |
-    curl \
-        --disable \
-        --silent \
-        --show-error \
-        --config - |
-    grep -o -- '-100[0-9]\+' |
-    sort -u
+2. Melde dich mit deinem Telegram-Konto an.
 
-unset BOT_TOKEN
-```
+3. Öffne in der linken Seitenleiste den Telegram-Kanal, den du für APTGRAM verwenden möchtest.
 
-Das Terminal fragt nun nach:
+4. Sieh dir anschließend die Adresse oben in der Adressleiste des Browsers an.
+
+Die Adresse sieht beispielsweise so aus:
 
 ```text
-Telegram Bot Token:
+https://web.telegram.org/a/#-1001234567890
 ```
 
-Füge den Bot Token ein, den du von `@BotFather` erhalten hast.
-
-Während der Eingabe werden keine Zeichen angezeigt.
-
-Das ist normal und verhindert, dass der Token offen im Terminal dargestellt wird.
-
-Drücke anschließend `Enter`.
-
-Nun sollte die numerische Chat ID deines Telegram-Kanals angezeigt werden.
-
-Beispiel:
+Die vollständige Kanal-ID steht hinter dem `#`:
 
 ```text
 -1001234567890
@@ -223,27 +189,20 @@ Beispiel:
 
 Kopiere die vollständige Nummer einschließlich des Minuszeichens.
 
-Du benötigst sie gleich während der APTGRAM-Installation.
+Du benötigst diese Kanal-ID gleich während der APTGRAM-Installation.
 
-<!-- SCREENSHOT 3
-Datei: docs/images/telegram-chat-id.png
-Inhalt: Terminal nach erfolgreicher Ermittlung der Chat ID.
-Der Bot Token darf nicht sichtbar sein.
-Die ausgegebene -100... Chat ID darf sichtbar sein.
--->
+![Telegram Chat ID des Kanals in Telegram Web](images/telegram-chat-id.png)
 
-#### Es wird keine Chat ID angezeigt?
 
-Prüfe zunächst folgende Punkte:
+#### Die Kanal-ID wird nicht angezeigt?
 
-1. Der Bot wurde dem richtigen Telegram-Kanal hinzugefügt.
-2. Der Bot ist Administrator des Kanals.
-3. Der Bot darf Nachrichten veröffentlichen.
-4. Nach dem Hinzufügen des Bots wurde eine neue Nachricht im Kanal veröffentlicht.
+Prüfe folgende Punkte:
 
-Sende anschließend erneut eine Nachricht in den Telegram-Kanal.
-
-Führe danach den Befehl zur Ermittlung der Chat ID noch einmal aus.
+1. Du hast in Telegram Web den richtigen Kanal geöffnet.
+2. Du befindest dich nicht in der privaten Unterhaltung mit dem Bot.
+3. Du hast nicht die verknüpfte Diskussionsgruppe des Kanals geöffnet.
+4. Du verwendest die vollständige Adresse aus der Adressleiste des Browsers.
+5. Die kopierte Kanal-ID beginnt mit `-100`.
 
 ---
 
@@ -357,11 +316,8 @@ Telegram-Verbindung erfolgreich.
 
 Dort sollte eine Testnachricht von APTGRAM angekommen sein.
 
-<!-- SCREENSHOT 4
-Datei: docs/images/telegram-test-message.png
-Inhalt: Telegram-Kanal mit der erfolgreichen APTGRAM-Testnachricht.
-Idealerweise Bot-Name und Testnachricht sichtbar.
--->
+![Erfolgreiche APTGRAM-Testnachricht im Telegram-Kanal](images/telegram-test-message.png)
+
 
 Wurde die Testnachricht empfangen, ist die Telegram-Konfiguration erfolgreich abgeschlossen.
 
@@ -407,7 +363,7 @@ Tägliche Prüfung: 20:00
 Telegram Bot Token: erfolgreich geprüft
 ```
 
-Der vollständige Telegram Bot Token wird in dieser Zusammenfassung nicht erneut benötigt.
+Der vollständige Telegram Bot Token wird in dieser Zusammenfassung nicht erneut angezeigt.
 
 ---
 
@@ -560,8 +516,4 @@ APTGRAM wurde vollständig entfernt.
 
 APTGRAM hinterlässt anschließend keine installierten Programmdateien, Konfigurationsdateien oder `systemd`-Units auf dem System.
 
-[Zurück zur Sprachauswahl](#documentation-languages)
-
----
-
-<a id="italiano"></a>
+[← Zurück zur README](../README.md)

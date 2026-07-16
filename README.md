@@ -114,7 +114,12 @@ A Telegram test message is sent during installation.
 
 For the detailed step-by-step guide, including Telegram bot and channel setup:
 
+- [🇬🇧 Detailed installation guide in English](docs/INSTALLATION_EN.md)
+- [🇫🇷 Guide d’installation détaillé en français](docs/INSTALLATION_FR.md)
 - [🇩🇪 Ausführliche Installation auf Deutsch](docs/INSTALLATION_DE.md)
+- [🇮🇹 Guida dettagliata all’installazione in italiano](docs/INSTALLATION_IT.md)
+- [🇧🇷 Guia detalhado de instalação em português (Brasil)](docs/INSTALLATION_PT_BR.md)
+- [🇪🇸 Guía de instalación detallada en español](docs/INSTALLATION_ES.md)
 
 ## Updating APTGRAM
 
