@@ -4,12 +4,21 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing release tag (for example v1.1.0)"
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -22,6 +31,7 @@ jobs:
       - name: Check out tagged source
         uses: actions/checkout@v6
         with:
+          ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -29,17 +39,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
-            echo "GitHub release already exists: ${GITHUB_REF_NAME}" >&2
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "GitHub release already exists: ${RELEASE_TAG}" >&2
             exit 1
           fi
 
       - name: Run release checks and build assets
-        run: tools/check-release.sh --tag "${GITHUB_REF_NAME}"
+        run: tools/check-release.sh --tag "${RELEASE_TAG}"
 
       - name: Extract release notes from CHANGELOG.md
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
 
           awk -v version="${version}" '
             $0 ~ "^## \\[" version "\\] - " {
@@ -63,14 +73,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${RELEASE_TAG#v}"
 
-          gh release create "${GITHUB_REF_NAME}" \
+          gh release create "${RELEASE_TAG}" \
             "dist/aptgram-v${version}.tar.gz" \
             "dist/aptgram-v${version}.tar.gz.sha256" \
             "dist/aptgram.tar.gz" \
             "dist/aptgram.tar.gz.sha256" \
             "dist/aptgram.version" \
-            --title "APTGRAM ${GITHUB_REF_NAME}" \
+            --title "APTGRAM ${RELEASE_TAG}" \
             --notes-file "${RUNNER_TEMP}/release-notes.md" \
             --verify-tag
